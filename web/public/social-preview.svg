@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"
+     role="img"
+     aria-label="GCPL Treasury Command. A Phase 0 treasury control layer showing the annualised cash leak. Synthetic demonstration data; this system never moves money.">
+  <title>GCPL Treasury Command</title>
+  <desc>Dark operations console preview card. States that the data is synthetic and that the system never moves money.</desc>
+
+  <rect width="1200" height="630" fill="#161616"/>
+
+  <!-- faint grid, to read as an operations surface rather than a marketing card -->
+  <g stroke="#242424" stroke-width="1">
+    <path d="M0 90.5H1200M0 180.5H1200M0 270.5H1200M0 360.5H1200M0 450.5H1200M0 540.5H1200"/>
+    <path d="M120.5 0V630M240.5 0V630M360.5 0V630M480.5 0V630M600.5 0V630M720.5 0V630M840.5 0V630M960.5 0V630M1080.5 0V630"/>
+  </g>
+
+  <g transform="translate(72 72)">
+    <rect width="44" height="44" rx="8" fill="none" stroke="#6929c4" stroke-width="3"/>
+    <path d="M11 32V18M20 32V11M29 32V23M38 32V15" stroke="#be95ff" stroke-width="3.6" stroke-linecap="round"/>
+  </g>
+
+  <text x="136" y="104" fill="#f4f4f4" font-family="Inter, system-ui, sans-serif" font-size="30" font-weight="600">
+    GCPL Treasury Command
+  </text>
+  <text x="136" y="132" fill="#8d8d8d" font-family="Inter, system-ui, sans-serif" font-size="17">
+    Phase 0 control layer · not a Treasury Management System
+  </text>
+
+  <text x="72" y="248" fill="#8d8d8d" font-family="Inter, system-ui, sans-serif" font-size="19" letter-spacing="2">
+    ANNUALISED CASH LEAK
+  </text>
+  <text x="72" y="340" fill="#fa4d56" font-family="Inter, system-ui, sans-serif" font-size="86" font-weight="700"
+        font-variant-numeric="tabular-nums">
+    computed on load
+  </text>
+  <text x="72" y="382" fill="#c6c6c6" font-family="Inter, system-ui, sans-serif" font-size="19">
+    Surplus cash in one entity, external borrowing in another. The group pays the full spread.
+  </text>
+
+  <g font-family="Inter, system-ui, sans-serif" font-size="16" fill="#c6c6c6">
+    <g transform="translate(72 440)">
+      <rect width="250" height="72" rx="4" fill="#1c1c1c" stroke="#303030"/>
+      <text x="16" y="28" fill="#8d8d8d" font-size="13">NINE-CONSTRAINT ENGINE</text>
+      <text x="16" y="52">Every proposal shows its arithmetic</text>
+    </g>
+    <g transform="translate(342 440)">
+      <rect width="250" height="72" rx="4" fill="#1c1c1c" stroke="#303030"/>
+      <text x="16" y="28" fill="#8d8d8d" font-size="13">LR1 TO LR16</text>
+      <text x="16" y="52">A dealer cannot approve own deal</text>
+    </g>
+    <g transform="translate(612 440)">
+      <rect width="250" height="72" rx="4" fill="#1c1c1c" stroke="#303030"/>
+      <text x="16" y="28" fill="#8d8d8d" font-size="13">HASH-CHAINED AUDIT</text>
+      <text x="16" y="52">Tampering names the exact row</text>
+    </g>
+    <g transform="translate(882 440)">
+      <rect width="246" height="72" rx="4" fill="#1c1c1c" stroke="#303030"/>
+      <text x="16" y="28" fill="#8d8d8d" font-size="13">ROUTE A TO D</text>
+      <text x="16" y="52">India routing, with citations</text>
+    </g>
+  </g>
+
+  <rect x="0" y="578" width="1200" height="52" fill="#1c1c1c"/>
+  <text x="600" y="610" fill="#8d8d8d" text-anchor="middle"
+        font-family="Inter, system-ui, sans-serif" font-size="16" letter-spacing="3">
+    SYNTHETIC DATA · DEMO TENANT · THIS SYSTEM NEVER MOVES MONEY
+  </text>
+</svg>

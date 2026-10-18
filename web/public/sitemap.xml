@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Present for completeness and for internal link checking. Every route is
+  disallowed in robots.txt: this build is private until results are announced.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>/canvas</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>/canvas/pooling</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>/console</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>/terminal</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>/brief</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>/privacy.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>/terms.html</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+</urlset>

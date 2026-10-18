@@ -1,0 +1,12 @@
+# GCPL Treasury Command — private demonstration build.
+# This application carries synthetic data for a case competition and must not be
+# indexed. Nothing here is a public resource.
+
+User-agent: *
+Disallow: /
+
+# The API is persona-scoped and returns no data without an X-Persona header,
+# but it is listed explicitly so the intent is unambiguous.
+Disallow: /api/
+
+Sitemap: /sitemap.xml

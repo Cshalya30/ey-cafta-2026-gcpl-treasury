@@ -1,0 +1,221 @@
+/* Motion tokens.
+ *
+ * The motion personality for this product is RESTRAINED PRECISION. It is an
+ * operations console watched at a glance, not a landing page: motion here
+ * exists to show causation and state change, never to decorate. Anything that
+ * draws the eye without telling the reader something is a defect.
+ *
+ * Three rules govern everything below.
+ *   1. Animate `transform` and `opacity` only. Those two are composited off the
+ *      main thread; width, height, top and box-shadow are not, and a dropped
+ *      frame on an 81-row grid is immediately visible.
+ *   2. Leaving is faster than entering, at roughly 75%. A reader has already
+ *      decided to dismiss; making them wait for it feels broken.
+ *   3. Every duration has a `prefers-reduced-motion` answer, and that answer is
+ *      never "animate anyway, slightly slower".
+ *
+ * Durations follow the standard operational scale: short for direct
+ * manipulation, longer only when something travels across the screen.
+ */
+
+:root {
+  /* ── durations ──────────────────────────────────────────────── */
+  --t-press: 120ms; /* button press, hover: direct manipulation */
+  --t-reveal: 180ms; /* tooltip, dropdown, badge, toast */
+  --t-enter: 240ms; /* a card, panel or slide-over arriving */
+  --t-exit: 180ms; /* ~75% of enter */
+  --t-travel: 320ms; /* something moving across the viewport */
+  --t-stagger: 40ms; /* gap between items in a revealed list */
+
+  /* ── easing ─────────────────────────────────────────────────── */
+  /* Entering decelerates: it arrives and settles. */
+  --e-out: cubic-bezier(0.2, 0, 0.1, 1);
+  /* Leaving accelerates away: no lingering. */
+  --e-in: cubic-bezier(0.4, 0, 1, 1);
+  /* Travelling across the screen eases both ends. */
+  --e-inout: cubic-bezier(0.4, 0, 0.2, 1);
+  /* A single, small overshoot, reserved for a value that has just changed. */
+  --e-emphasis: cubic-bezier(0.2, 0, 0, 1.35);
+}
+
+/* Reduced motion is a real preference, not a smaller number. Transitions
+ * collapse to an instant state change; nothing loops, nothing travels. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-press: 1ms;
+    --t-reveal: 1ms;
+    --t-enter: 1ms;
+    --t-exit: 1ms;
+    --t-travel: 1ms;
+    --t-stagger: 0ms;
+  }
+}
+
+/* ── entrances ──────────────────────────────────────────────────
+ * A panel rises a short distance as it fades in. 6px, not 24px: on a dense
+ * grid a long travel reads as the layout settling badly rather than as
+ * content arriving.
+ */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The slide-over comes from the edge it is anchored to. */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translate3d(16px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* The command palette is a deliberate interruption, so it may scale. Barely. */
+@keyframes palette-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-rise {
+  animation: rise-in var(--t-enter) var(--e-out) both;
+}
+
+.animate-fade {
+  animation: fade-in var(--t-reveal) var(--e-out) both;
+}
+
+.animate-slide-right {
+  animation: slide-in-right var(--t-enter) var(--e-out) both;
+}
+
+.animate-palette {
+  animation: palette-in var(--t-enter) var(--e-out) both;
+}
+
+/* A revealed list staggers, so the eye follows the order the data is in.
+ * Capped at eight: past that the last item waits long enough to feel broken,
+ * and a virtualized grid must never stagger at all. */
+.stagger > * {
+  animation: rise-in var(--t-enter) var(--e-out) both;
+}
+.stagger > *:nth-child(1) { animation-delay: calc(var(--t-stagger) * 0); }
+.stagger > *:nth-child(2) { animation-delay: calc(var(--t-stagger) * 1); }
+.stagger > *:nth-child(3) { animation-delay: calc(var(--t-stagger) * 2); }
+.stagger > *:nth-child(4) { animation-delay: calc(var(--t-stagger) * 3); }
+.stagger > *:nth-child(5) { animation-delay: calc(var(--t-stagger) * 4); }
+.stagger > *:nth-child(6) { animation-delay: calc(var(--t-stagger) * 5); }
+.stagger > *:nth-child(7) { animation-delay: calc(var(--t-stagger) * 6); }
+.stagger > *:nth-child(n + 8) { animation-delay: calc(var(--t-stagger) * 7); }
+
+/* ── value changes ──────────────────────────────────────────────
+ * When a computed figure changes under the reader (a slider moves, a rate is
+ * edited), the number itself acknowledges it. This is the one place a small
+ * overshoot is warranted: it marks causation, which is the product's subject.
+ */
+@keyframes value-settle {
+  0% {
+    transform: translate3d(0, -2px, 0);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+.animate-value {
+  animation: value-settle var(--t-reveal) var(--e-emphasis) both;
+}
+
+/* ── the leak edge ──────────────────────────────────────────────
+ * The only looping animation in the product, and it is load-bearing: a dashed
+ * line travelling from a surplus entity to a borrowing one is money leaving
+ * the group. Everything else on the Canvas is structure and holds still, so
+ * this reads instantly. It stops entirely under reduced motion, where the
+ * dashes remain as a static, still-distinguishable stroke.
+ */
+@keyframes leak-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.leak-edge {
+  stroke-dasharray: 6 4;
+  animation: leak-dash 1100ms linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leak-edge {
+    animation: none;
+  }
+}
+
+/* ── interaction feedback ───────────────────────────────────────
+ * Press is the fastest thing in the product because it is the most direct:
+ * the reader's own finger is on it and any lag reads as the app hanging.
+ */
+.press {
+  transition:
+    transform var(--t-press) var(--e-out),
+    opacity var(--t-press) var(--e-out),
+    background-color var(--t-press) var(--e-out);
+}
+.press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Row hover must be instantaneous. A transition on a grid row produces a
+ * visible lag as the pointer travels down 81 rows. */
+.grid-table tbody tr {
+  transition: background-color 60ms linear;
+}
+
+/* Skeletons breathe rather than sweep: a sweeping gradient on a dense table
+ * is more distracting than the absence of data it stands in for. */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.skeleton {
+  background: var(--surface-4);
+  border-radius: var(--radius-sm);
+  animation: skeleton-pulse 1.4s var(--e-inout) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    opacity: 0.45;
+  }
+}

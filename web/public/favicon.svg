@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="GCPL Treasury Command">
+  <rect width="32" height="32" rx="6" fill="#161616"/>
+  <rect x="1" y="1" width="30" height="30" rx="5" fill="none" stroke="#6929c4" stroke-width="2"/>
+  <path d="M8 22V13M14 22V9M20 22V16M26 22V11" stroke="#be95ff" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M6 25.5h20" stroke="#42be65" stroke-width="2" stroke-linecap="round"/>
+</svg>

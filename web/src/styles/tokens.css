@@ -1,0 +1,122 @@
+/* Design tokens. The contract is docs/DESIGN.md and PRD section 11.
+ *
+ * Dark-theme elevation uses surface lightness, not shadow: each layer up is one
+ * step lighter than the layer below. Shadows are hard to see on a near-black
+ * base and read as smudge rather than depth.
+ *
+ * Colour never carries quantity alone. Every status pairs a hue with a glyph or
+ * a numeric badge, because people do not perceive colour values as ordered.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* ── surfaces, Radix steps 1 to 5 ─────────────────────────────── */
+  --surface-1: #161616; /* Carbon Gray 100. Near-black, not pure black. */
+  --surface-2: #1c1c1c;
+  --surface-3: #242424;
+  --surface-4: #2c2c2c;
+  --surface-5: #343434;
+
+  /* ── borders, steps 6 to 8 ────────────────────────────────────── */
+  --border-subtle: #303030;
+  --border-interactive: #3d3d3d;
+  --border-strong: #525252;
+
+  /* ── text, steps 11 and 12 ────────────────────────────────────── */
+  --text-primary: #f4f4f4;
+  --text-secondary: #c6c6c6;
+  --text-tertiary: #8d8d8d;
+  --text-disabled: #6f6f6f;
+
+  /* ── status: 9 for the dot, 3 for the row tint, 11 for the label ─
+   * Every one of these clears 3:1 against --surface-1 as a graphical
+   * element, and the -text variants clear 4.5:1 as text under 24px.     */
+  --ok-9: #24a148;
+  --ok-3: #0b2a16;
+  --ok-11: #42be65;
+
+  --warn-9: #f1c21b;
+  --warn-3: #302612;
+  --warn-11: #f1c21b;
+  /* Amber at step 9 needs dark text, not white. Our warning state is amber,
+   * so this applies directly and is not a hypothetical. */
+  --warn-on: #161616;
+
+  --err-9: #da1e28;
+  --err-3: #3a1013;
+  --err-11: #fa4d56;
+
+  --info-9: #0f62fe;
+  --info-3: #0d1c3d;
+  --info-11: #78a9ff;
+
+  --accent-9: #6929c4;
+  --accent-10: #8a3ffc;
+  --accent-11: #be95ff;
+
+  --stale-9: #8d8d8d;
+  --stale-3: #262626;
+
+  /* ── route colours, paired with the letter A to D in every use ── */
+  --route-a: #08bdba;
+  --route-b: #4589ff;
+  --route-c: #d4bbff;
+  --route-d: #ff8389;
+
+  /* ── focus: 3:1 minimum, and more prominent than rest ──────────── */
+  --focus-ring: #78a9ff;
+
+  /* ── density, Carbon scale (PRD 11.1) ──────────────────────────
+   * 24px is Carbon xs, for blotters and the audit stream.
+   * 32px is Carbon sm, for primary tables.
+   * 40px is Carbon md, for forms only. Using md everywhere would make this
+   * read as a generic SaaS app rather than an operations tool.          */
+  --row-xs: 24px;
+  --row-sm: 32px;
+  --row-md: 40px;
+
+  --topbar-h: 48px;
+  --ribbon-h: 24px;
+
+  /* ── type ─────────────────────────────────────────────────────── */
+  --font-sans: Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Cascadia Mono', ui-monospace, monospace;
+
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-lg: 15px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --text-3xl: 38px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  --ease: cubic-bezier(0.2, 0, 0.38, 0.9);
+}
+
+/* The product is dark by design: a trading-floor surface, not a theme choice.
+ * A light override exists so the forced-colors and print paths stay legible. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --surface-1: #ffffff;
+  --surface-2: #f4f4f4;
+  --surface-3: #e8e8e8;
+  --surface-4: #e0e0e0;
+  --surface-5: #d1d1d1;
+  --border-subtle: #d1d1d1;
+  --border-interactive: #b8b8b8;
+  --border-strong: #8d8d8d;
+  --text-primary: #161616;
+  --text-secondary: #393939;
+  --text-tertiary: #6f6f6f;
+  --text-disabled: #a8a8a8;
+  --ok-3: #defbe6;
+  --warn-3: #fcf4d6;
+  --err-3: #fff1f1;
+  --info-3: #edf5ff;
+  --stale-3: #e8e8e8;
+}

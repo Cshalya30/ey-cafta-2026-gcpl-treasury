@@ -1,0 +1,12 @@
+{
+  "name": "GCPL Treasury Command",
+  "short_name": "Treasury Command",
+  "description": "Phase 0 treasury control layer. Synthetic demonstration data.",
+  "start_url": "/canvas",
+  "display": "standalone",
+  "background_color": "#161616",
+  "theme_color": "#161616",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

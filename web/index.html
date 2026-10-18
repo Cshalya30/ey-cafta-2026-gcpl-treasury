@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Matches the page background so the browser chrome does not flash light. -->
+    <meta name="theme-color" content="#161616" />
+    <meta name="color-scheme" content="dark" />
+
+    <title>GCPL Treasury Command — group cash visibility in ninety days</title>
+    <meta
+      name="description"
+      content="A Phase 0 treasury control layer: group-wide daily cash visibility on normalised bank feeds, a nine-constraint pooling engine, a segregation-of-duties linter and a hash-chained audit trail. Synthetic demonstration data."
+    />
+    <meta name="author" content="Chirantan Shalya, Narayan Jaiswal, Laavanya" />
+
+    <!-- This is a private demonstration build. It must never be indexed. -->
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="canonical" href="/" />
+
+    <!-- Social preview. The image states that the data is synthetic, because a
+         screenshot of a treasury console is exactly the thing to be misread. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="GCPL Treasury Command" />
+    <meta
+      property="og:description"
+      content="Phase 0 treasury control layer. Daily group cash visibility, a nine-constraint pooling engine and a hash-chained audit trail. Synthetic demonstration data."
+    />
+    <meta property="og:image" content="/social-preview.svg" />
+    <meta property="og:image:alt" content="GCPL Treasury Command, a dark operations console showing the annualised cash leak, marked as synthetic demonstration data." />
+    <meta property="og:locale" content="en_GB" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="GCPL Treasury Command" />
+    <meta
+      name="twitter:description"
+      content="Phase 0 treasury control layer. Synthetic demonstration data; this system never moves money."
+    />
+    <meta name="twitter:image" content="/social-preview.svg" />
+
+    <!-- Self-hosted fonts only: the app must run with no network beyond localhost. -->
+    <style>
+      @font-face {
+        font-family: 'Inter';
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: swap;
+        src: local('Inter'), local('Inter Variable');
+      }
+      @font-face {
+        font-family: 'IBM Plex Mono';
+        font-style: normal;
+        font-weight: 400 600;
+        font-display: swap;
+        src: local('IBM Plex Mono'), local('Cascadia Mono'), local('Consolas');
+      }
+      html {
+        color-scheme: dark;
+        background: #161616;
+      }
+      /* Painted before the bundle parses, so there is no white flash. */
+      #root:empty::after {
+        content: 'Loading the treasury console…';
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: #8d8d8d;
+        font: 13px/1.5 Inter, system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>
+      <div style="padding: 24px; color: #f4f4f4; font: 14px/1.6 system-ui, sans-serif">
+        <h1>JavaScript is required</h1>
+        <p>
+          GCPL Treasury Command is an interactive operations console and cannot be rendered
+          without JavaScript. The underlying data is available from the API at
+          <code>/api/v1</code>, which returns JSON.
+        </p>
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,281 @@
+@import './tokens.css';
+@import './motion.css';
+@import 'tailwindcss';
+/* Imported INTO the base layer on purpose. Vendor CSS arriving unlayered
+ * would beat every override in `components` below, regardless of specificity,
+ * which is what left the graph controls rendering as a white box on a
+ * near-black canvas. */
+@import '@xyflow/react/dist/style.css' layer(base);
+
+/* Expose the tokens to Tailwind v4's theme so utilities resolve against them. */
+@theme inline {
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-4: var(--surface-4);
+  --color-surface-5: var(--surface-5);
+  --color-subtle: var(--border-subtle);
+  --color-interactive: var(--border-interactive);
+  --color-strong: var(--border-strong);
+  --color-fg: var(--text-primary);
+  --color-fg-2: var(--text-secondary);
+  --color-fg-3: var(--text-tertiary);
+  --color-ok: var(--ok-11);
+  --color-warn: var(--warn-11);
+  --color-err: var(--err-11);
+  --color-info: var(--info-11);
+  --color-accent: var(--accent-11);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+/* Base element styles live in Tailwind's `base` layer.
+ *
+ * This matters, and it is not cosmetic: unlayered CSS beats layered CSS in the
+ * cascade regardless of specificity. An unlayered `a { color: ... }` therefore
+ * overrides a `text-white` utility, which rendered the Canvas call-to-action
+ * as blue-on-purple at 3.28:1 until an Axe run caught it. Keeping these in
+ * `base` lets a utility do what the author of the markup plainly intended.
+ */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    /* An explicit background, so the page never flashes the UA default. */
+    background: var(--surface-1);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.45;
+    font-feature-settings: 'cv05' 1;
+    overflow: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  /* Every numeric column aligns. Non-negotiable in a multi-currency product. */
+  .tnum,
+  td.num,
+  th.num {
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+  }
+
+  /* Identifiers, account numbers and reference codes. */
+  .ident {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums lining-nums slashed-zero;
+    font-feature-settings: 'tnum' 1, 'lnum' 1, 'zero' 1;
+  }
+
+  /* Hover, active and focus are MORE prominent than rest, not merely different. */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Never remove the outline without a replacement. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* Windows dark mode renders a native select unreadable without both of these. */
+  select {
+    background-color: var(--surface-3);
+    color: var(--text-primary);
+  }
+
+  a {
+    color: var(--info-11);
+    text-underline-offset: 2px;
+  }
+
+  /* Scrollbars: visible enough to grab, quiet enough to ignore. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--border-interactive);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+    background-clip: content-box;
+  }
+
+  /* Animate transform and opacity only. Never `transition: all`. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* ── table primitives (PRD 11.5) ───────────────────────────────── */
+
+  .grid-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: var(--text-sm);
+  }
+
+  /* Header rows, toolbars and pagination match the body row size. */
+  .grid-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    height: var(--row-sm);
+    padding: 0 10px;
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--surface-3);
+    /* Drawn once: overlapping alpha borders produce visible intersections,
+     * which is the commonest visual defect in a dense grid. */
+    border-bottom: 1px solid var(--border-subtle);
+    white-space: nowrap;
+  }
+
+  .grid-table tbody td {
+    height: var(--row-sm);
+    padding: 0 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+  }
+
+  .grid-table.dense tbody td,
+  .grid-table.dense thead th {
+    height: var(--row-xs);
+    font-size: var(--text-xs);
+  }
+
+  .grid-table tbody tr:nth-child(even) {
+    background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+  }
+
+  .grid-table tbody tr:hover {
+    background: var(--surface-3);
+  }
+
+  .grid-table tbody tr[aria-selected='true'] {
+    background: var(--info-3);
+  }
+
+  /* The identifier column freezes on horizontal scroll. */
+  .grid-table .freeze-col {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--surface-1);
+  }
+  .grid-table tbody tr:hover .freeze-col {
+    background: var(--surface-3);
+  }
+  .grid-table thead .freeze-col {
+    z-index: 3;
+    background: var(--surface-3);
+  }
+
+  /* Sort arrows appear on hover; only the sorted column keeps its icon. */
+  .sort-icon {
+    opacity: 0;
+    transition: opacity 120ms var(--ease);
+  }
+  th:hover .sort-icon,
+  th[aria-sort] .sort-icon {
+    opacity: 1;
+  }
+
+  /* Flex children truncate silently without this. */
+  .min-w-0 {
+    min-width: 0;
+  }
+
+  /* ── xyflow surface overrides ──────────────────────────────────── */
+  .react-flow {
+    background: var(--surface-1);
+  }
+  .react-flow__node {
+    cursor: pointer;
+  }
+  .react-flow__attribution {
+    display: none;
+  }
+  .react-flow__minimap {
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+  }
+  /* The container carries its own light background by default, which shows
+     through as a white box on a near-black canvas. */
+  .react-flow__controls {
+    background: var(--surface-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    box-shadow: none;
+    overflow: hidden;
+  }
+  .react-flow__controls-button {
+    background: var(--surface-3);
+    border: none;
+    border-bottom: 1px solid var(--border-subtle);
+    fill: var(--text-secondary);
+  }
+  .react-flow__controls-button:last-child {
+    border-bottom: none;
+  }
+  .react-flow__controls-button:hover {
+    background: var(--surface-4);
+    fill: var(--text-primary);
+  }
+  .react-flow__controls-button svg {
+    fill: currentColor;
+  }
+
+  @media print {
+    body {
+      overflow: visible;
+    }
+  }
+}
