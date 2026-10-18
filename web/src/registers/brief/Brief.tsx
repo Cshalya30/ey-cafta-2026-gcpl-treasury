@@ -22,6 +22,15 @@ import { count, date, pct, titleCase } from '@/lib/format';
 
 const TABS = ['cfo', 'kpis', 'waves', 'day1'] as const;
 
+/* Spelled out rather than title-cased: an initialism loses its capitals to a
+   generic transform, and "Kpis" on a CFO's screen is a small but real tell. */
+const TAB_LABEL: Record<(typeof TABS)[number], string> = {
+  cfo: 'CFO narrative',
+  kpis: 'KPIs',
+  waves: 'Waves',
+  day1: 'Day-1 kit',
+};
+
 export function Brief() {
   const [tab, setTab] = useQueryState('tab', { defaultValue: 'cfo' });
 
@@ -45,7 +54,7 @@ export function Brief() {
                 : 'text-[var(--text-secondary)] hover:bg-[var(--surface-3)]',
             )}
           >
-            {name === 'cfo' ? 'CFO narrative' : name === 'day1' ? 'Day-1 kit' : titleCase(name)}
+            {TAB_LABEL[name]}
           </button>
         ))}
       </nav>
