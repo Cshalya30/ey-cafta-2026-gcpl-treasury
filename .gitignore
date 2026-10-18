@@ -1,0 +1,41 @@
+# ── secrets ───────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# ── generated data ────────────────────────────────────────
+data/*.db
+data/*.db-wal
+data/*.db-shm
+
+# ── python ────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── node ──────────────────────────────────────────────────
+node_modules/
+web/dist/
+web/.vite/
+*.tsbuildinfo
+
+# ── tooling ───────────────────────────────────────────────
+.playwright-mcp/
+test-results/
+playwright-report/
+web/tests/**/*-actual.png
+web/tests/**/*-diff.png
+
+# ── os ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── local-only claude config ──────────────────────────────
+.claude/settings.local.json
+CLAUDE.local.md
