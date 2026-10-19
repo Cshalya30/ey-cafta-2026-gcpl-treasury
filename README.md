@@ -16,6 +16,12 @@ vendor TMS the group selects at month four.
   <img alt="Moves money" src="https://img.shields.io/badge/moves%20money-never-da3633?style=flat-square&labelColor=161616" />
 </p>
 
+<p>
+  <a href="https://gcpl-treasury-command.onrender.com"><strong>Open the live demo →</strong></a>
+</p>
+
+<sub>Hosted on a free instance that sleeps when idle; the first load after a quiet spell takes up to a minute.</sub>
+
 <img src="docs/screenshots/canvas.png" alt="The Canvas register: twelve entities drawn as a node graph, with animated red edges tracing the Cash Leak between surplus and borrowing entities, and a side panel quantifying it annualised." width="100%" />
 
 <sub>The Canvas register. Red edges are the Cash Leak: surplus in one entity, external borrowing in another.</sub>
@@ -84,7 +90,14 @@ python -m uvicorn api.main:app --reload --port 8000
 cd web && npm install && npm run dev
 ```
 
-Then open <http://localhost:5173>. The API docs are at <http://localhost:8000/docs>.
+Then open <http://localhost:5173>.
+
+The API reference is at `/docs`, on whichever origin you are running — the
+Vite dev server does not proxy it, so in development it is
+<http://localhost:8000/docs>. It is served from this repository rather than a
+CDN, and it carries a persona selector: pick P5, call
+`GET /api/v1/entities/GCPL-GB`, and watch the same request that returns 200 for
+P2 come back 403.
 
 <details>
 <summary><strong>First-time setup</strong></summary>
@@ -289,6 +302,10 @@ same image runs unchanged on Railway, Fly.io or a Hugging Face Docker Space —
 The filesystem is ephemeral: a restart returns the demo to the seeded state,
 which is what you want for a link strangers can write to.
 
+`/docs` is open on the deployment and closed when `GCPL_ENV=prod`, exactly as
+FastAPI's own page was. It loads nothing from a third-party host, so it works
+behind the same policy as the rest of the application.
+
 > [!NOTE]
 > SQLite and a hash-chained audit trail need one durable writer. That rules out
 > serverless platforms whose instances are ephemeral and fan out per request:
@@ -341,6 +358,7 @@ Non-obvious choices are written down rather than defended from memory:
 | 0005 | [Security posture](docs/decisions/0005-security-posture.md) |
 | 0006 | [The motion system](docs/decisions/0006-motion-system.md) |
 | 0007 | [One origin, and two content security policies](docs/decisions/0007-one-origin-and-two-content-security-policies.md) |
+| 0008 | [The API reference page is served from this origin](docs/decisions/0008-the-api-reference-page-is-served-from-this-origin.md) |
 
 ---
 

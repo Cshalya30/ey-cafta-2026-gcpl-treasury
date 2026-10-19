@@ -15,6 +15,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .config import settings
 from .db import get_engine, init_db
 from .routers import banking, entities, forecasts, governance, pooling, session, state
+from .docs import mount_docs
 from .security import HttpsRedirectMiddleware, SecurityHeadersMiddleware
 from .static import mount_spa
 
@@ -37,7 +38,10 @@ app = FastAPI(
     title="GCPL Treasury Command",
     version="2.0.0",
     description=DESCRIPTION,
-    docs_url=settings.docs_url,
+    # FastAPI's own docs page loads Swagger from a CDN, which this
+    # application's policy blocks. api/docs.py serves an equivalent page
+    # from vendored assets instead; see mount_docs below.
+    docs_url=None,
     redoc_url=None,
     openapi_url=None if settings.is_prod else "/openapi.json",
 )
@@ -142,6 +146,11 @@ for module in (state, entities, banking, forecasts, pooling, governance, session
 def health() -> dict:
     return {"status": "ok", "environment": settings.env, "moves_money": False}
 
+
+# The reference page is mounted before the app so that /docs and /docs-assets
+# resolve here rather than falling through to the SPA shell. False in prod,
+# where the OpenAPI surface is closed entirely.
+SERVING_DOCS = mount_docs(app)
 
 # The built app is mounted last so that every API route and /health is matched
 # before the root catch-all. Returns False when web/dist is absent, which is the

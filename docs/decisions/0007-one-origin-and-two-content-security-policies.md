@@ -1,6 +1,6 @@
 # 7. The app is served from the API, under two content security policies
 
-**Status** Accepted · **Date** 19 October 2026
+**Status** Accepted · **Date** 19 October 2026 · **Extended by** [0008](0008-the-api-reference-page-is-served-from-this-origin.md), which adds a third policy for the API reference page
 
 ## Context
 

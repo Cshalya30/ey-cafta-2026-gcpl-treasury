@@ -2,3 +2,10 @@
 *.png binary
 *.jpg binary
 *.woff2 binary
+
+# Vendored upstream build. Marked so GitHub's language statistics describe the
+# work in this repository rather than 1.4MB of minified Swagger UI, and so the
+# diff of an upgrade is collapsed by default.
+api/swagger_assets/swagger-ui-bundle.js linguist-vendored
+api/swagger_assets/swagger-ui.css       linguist-vendored
+api/swagger_assets/LICENSE              linguist-vendored

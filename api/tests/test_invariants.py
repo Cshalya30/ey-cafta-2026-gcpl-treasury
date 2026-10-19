@@ -69,7 +69,18 @@ EXEMPT = {
 }
 
 
-SKIPPED_DIRS = {"node_modules", "__pycache__", "tests", "dist", ".vite"}
+# swagger_assets holds vendored third-party builds, skipped for the same
+# reason as node_modules and dist: the guard polices the numbers this team
+# writes, and minified upstream CSS is full of hex colours and percentages
+# that no one here chose.
+SKIPPED_DIRS = {
+    "node_modules",
+    "__pycache__",
+    "tests",
+    "dist",
+    ".vite",
+    "swagger_assets",
+}
 
 
 def _scanned_files() -> list[Path]:

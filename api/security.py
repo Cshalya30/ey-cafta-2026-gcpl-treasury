@@ -78,9 +78,32 @@ IMMUTABLE_CACHE = "public, max-age=31536000, immutable"
 
 HEALTH_PATH = "/health"
 
-# Served by FastAPI, not by the app bundle, and closed entirely when
-# GCPL_ENV=prod. They belong on the API's side of the policy split.
-API_SURFACES = frozenset({HEALTH_PATH, "/docs", "/redoc", "/openapi.json"})
+# JSON surfaces: they embed nothing, so they take the API policy.
+API_SURFACES = frozenset({HEALTH_PATH, "/redoc", "/openapi.json"})
+
+# The reference page in api/docs.py. It is a document and has to load its own
+# stylesheet and bundle, so it cannot take default-src 'none'; but everything it
+# loads is served from this origin, so it needs no CDN allowance either.
+DOCS_PATH = "/docs"
+DOCS_ASSETS_PREFIX = "/docs-assets/"
+
+DOCS_CSP = (
+    "default-src 'none'; "
+    "script-src 'self'; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data:; "
+    "font-src 'self' data:; "
+    "connect-src 'self'; "
+    "object-src 'none'; "
+    "frame-ancestors 'none'; "
+    "base-uri 'none'; "
+    "form-action 'none'"
+)
+
+
+def _is_docs_path(path: str) -> bool:
+    """Whether this is the reference page or one of its vendored assets."""
+    return path == DOCS_PATH or path.startswith(DOCS_ASSETS_PREFIX)
 
 
 def _is_api_path(path: str) -> bool:
@@ -97,9 +120,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers[name] = value
 
         path = request.url.path
-        response.headers["Content-Security-Policy"] = (
-            API_CSP if _is_api_path(path) else APP_CSP
-        )
+        if _is_docs_path(path):
+            policy = DOCS_CSP
+        elif _is_api_path(path):
+            policy = API_CSP
+        else:
+            policy = APP_CSP
+        response.headers["Content-Security-Policy"] = policy
 
         # Only a response that actually carries the asset may be cached. A 404
         # or a redirect under /assets/ must stay uncached, or one bad deploy is
