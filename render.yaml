@@ -1,0 +1,37 @@
+# Render blueprint. Render builds the Dockerfile itself, so nothing needs
+# Docker installed locally and every push to master redeploys.
+#
+# The free plan spins a service down after about fifteen minutes idle and the
+# next request then waits thirty to sixty seconds for a cold start. For a link
+# a judge may open unannounced that is the one real weakness of this setup;
+# see docs/decisions/0007-one-origin-and-two-content-security-policies.md
+# for how it is handled.
+services:
+  - type: web
+    name: gcpl-treasury-command
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: master
+    dockerfilePath: ./Dockerfile
+
+    # Cheap, unauthenticated and exempt from the HTTPS redirect, so the probe
+    # cannot put the service into a restart loop.
+    healthCheckPath: /health
+
+    envVars:
+      # Writes stay open: the persona switcher is the demonstration, there is
+      # no sign-in screen in web/src, and the data is synthetic. Capability
+      # rules and ABAC are enforced in both modes and are not affected by this.
+      - key: GCPL_ENV
+        value: dev
+
+      # Render terminates TLS in front of the container, so HSTS is truthful
+      # here in a way it never is on localhost.
+      - key: GCPL_FORCE_HTTPS
+        value: "true"
+
+      # Generated once by Render and held as a secret. Nothing is written to
+      # the repository; without this the key would be random per boot.
+      - key: GCPL_SESSION_SECRET
+        generateValue: true

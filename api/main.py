@@ -16,6 +16,7 @@ from .config import settings
 from .db import get_engine, init_db
 from .routers import banking, entities, forecasts, governance, pooling, session, state
 from .security import HttpsRedirectMiddleware, SecurityHeadersMiddleware
+from .static import mount_spa
 
 API_PREFIX = "/api/v1"
 
@@ -140,3 +141,10 @@ for module in (state, entities, banking, forecasts, pooling, governance, session
 @app.get("/health", include_in_schema=False)
 def health() -> dict:
     return {"status": "ok", "environment": settings.env, "moves_money": False}
+
+
+# The built app is mounted last so that every API route and /health is matched
+# before the root catch-all. Returns False when web/dist is absent, which is the
+# normal state in development and under pytest: the API then runs alone and the
+# Vite dev server proxies /api to it.
+SERVING_APP = mount_spa(app)

@@ -1,0 +1,21 @@
+# The image builds the app from source; never copy a host build or a host venv
+# in, and never ship the generated database (the build seeds its own).
+.git
+.github
+.venv
+__pycache__
+*.py[cod]
+.pytest_cache
+data/
+web/node_modules
+web/dist
+node_modules
+.playwright-mcp
+test-results
+playwright-report
+docs
+.claude
+*.md
+!README.md
+.env
+.env.*

@@ -167,6 +167,49 @@ data/         Generated. Gitignored.
 
 ---
 
+## Hosting it
+
+The app and the API ship as **one image on one origin**. The client calls
+`/api/v1` as a relative path and the CSRF guard is a double-submit cookie pair,
+so splitting them across two hosts would require a cross-origin credentialled
+fetch and a `SameSite=None` cookie for no gain. FastAPI serves the built bundle
+at the root; `web/dist` is absent in development, so the mount is skipped and
+nothing about the two-command workflow above changes.
+
+```bash
+# Build the image exactly as the platform will.
+docker build -t gcpl-treasury-command .
+docker run --rm -p 8000:8000 gcpl-treasury-command   # http://localhost:8000
+```
+
+The image builds the app, seeds the canonical `--seed 42` dataset at build
+time, and runs as a non-root user. The generator asserts INV-1 through INV-3
+and exits non-zero, so a broken invariant fails the build rather than reaching
+a judge.
+
+**Render** is set up as a blueprint: push to `master`, point Render at
+`render.yaml`, and it builds the Dockerfile and redeploys on every push. The
+same image runs unchanged on Railway, Fly.io or a Hugging Face Docker Space —
+`$PORT` is read from the environment, defaulting to 8000.
+
+| Variable | Deployment value | Why |
+|---|---|---|
+| `GCPL_ENV` | `dev` | Writes stay open. There is no sign-in screen in `web/src`, and the persona switcher *is* the demonstration. ABAC and capability rules are enforced either way |
+| `GCPL_FORCE_HTTPS` | `true` | Sends HSTS and redirects plain HTTP. `/health` is exempt so a platform probe cannot loop |
+| `GCPL_SESSION_SECRET` | generated | Otherwise random per boot |
+| `GCPL_DB_PATH` | `/app/data/gcpl.db` | Set in the image |
+
+The filesystem is ephemeral: a restart returns the demo to the seeded state,
+which is what you want for a link strangers can write to. On a free tier the
+service sleeps when idle and the next visitor pays a cold start — an uptime
+check against `/health` every ten minutes keeps it warm.
+
+See `docs/decisions/0007-one-origin-and-two-content-security-policies.md`,
+which covers why the API's `default-src 'none'` policy cannot be the one the
+document is served under.
+
+---
+
 ## Security posture
 
 The data is synthetic, but the deployment story is part of the recommendation,
