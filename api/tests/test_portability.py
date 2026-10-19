@@ -320,3 +320,22 @@ def test_the_entrypoint_agrees_across_both_files():
     assert isinstance(getattr(imported, variable), FastAPI), (
         f"{declared} must resolve to the FastAPI instance Vercel loads"
     )
+
+
+def test_the_function_region_is_pinned():
+    """Co-location with the database is worth more than anything else here.
+
+    Vercel defaults functions to iad1. With the database in Singapore, every
+    query crossed the Pacific and the endpoints that issue several of them took
+    seconds. The symptom was invisible to /health, which touches no database,
+    so a smoke test would have reported the deployment healthy.
+    """
+    import json
+
+    config = json.loads((REPO_ROOT / "vercel.json").read_text(encoding="utf-8"))
+    regions = config.get("regions")
+    assert regions, (
+        "Without this the function returns to iad1 and every database round "
+        "trip costs roughly 220ms."
+    )
+    assert len(regions) == 1, "the Hobby plan allows exactly one region"
