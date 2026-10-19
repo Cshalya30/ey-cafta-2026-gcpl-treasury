@@ -15,7 +15,7 @@ import re
 from pathlib import Path
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.schema import CreateIndex, CreateTable
 
@@ -371,3 +371,49 @@ def test_the_deployment_config_carries_no_keys_outside_the_schema():
     for name, service in config["services"].items():
         unknown = set(service) - allowed_service
         assert not unknown, f"service {name!r} has unknown keys: {sorted(unknown)}"
+
+
+def test_derived_figures_are_computed_once_per_request(session):
+    """kpis() computed entity_financials, then cash_leak() computed it again.
+
+    Roughly eight queries, twice, for one response. In process that is
+    invisible; against a database over a network it is half the latency of the
+    slowest endpoint.
+    """
+    from api.services import metrics
+
+    calls = {"n": 0}
+    original = metrics._entity_financials
+
+    def counting(*args, **kwargs):
+        calls["n"] += 1
+        return original(*args, **kwargs)
+
+    metrics._entity_financials = counting
+    try:
+        metrics.kpis(session)
+    finally:
+        metrics._entity_financials = original
+
+    assert calls["n"] == 1, (
+        f"entity_financials ran {calls['n']} times for one set of KPIs"
+    )
+
+
+def test_a_write_invalidates_the_cached_figures(session):
+    """A cache that outlived a write would serve figures that contradict it."""
+    from api.models import Account
+    from api.services import metrics
+
+    first = metrics.entity_financials(session)
+    assert session.info.get(metrics._CACHE_KEY), "nothing was cached"
+
+    account = session.execute(select(Account).limit(1)).scalar_one()
+    account.feed_status = "stale" if account.feed_status == "live" else "live"
+    session.flush()
+
+    assert not session.info.get(metrics._CACHE_KEY), (
+        "the flush must have dropped the derived figures"
+    )
+    session.rollback()
+    assert first is not None

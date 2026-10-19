@@ -12,6 +12,7 @@ from datetime import date, datetime, timedelta, timezone
 
 
 from sqlalchemy import func, select
+from sqlalchemy import event
 from sqlalchemy.orm import Session
 
 from ..models import (
@@ -38,12 +39,44 @@ STALE_AFTER_HOURS = 24
 # ───────────────────────── as-of and FX ─────────────────────────
 
 
+# ───────────────────────── per-request memoisation ─────────────────────────
+#
+# kpis() computes entity_financials and then calls cash_leak(), which computes
+# it again; group_summary does the same. Each pass is roughly eight queries, so
+# the work was being done twice per request for no reason. In process that was
+# invisible. Against a database over the network it is half the latency of the
+# slowest endpoint.
+#
+# The cache lives on Session.info, so its lifetime is exactly one request —
+# FastAPI's get_session dependency hands each request its own Session — and it
+# is cleared on flush, so a write cannot be followed by a stale read.
+
+_CACHE_KEY = "gcpl_metrics_cache"
+
+
+def _memo(session: Session, key, factory):
+    cache = session.info.setdefault(_CACHE_KEY, {})
+    if key not in cache:
+        cache[key] = factory()
+    return cache[key]
+
+
+@event.listens_for(Session, "after_flush")
+def _drop_metrics_cache(session: Session, _flush_context) -> None:
+    """Any write invalidates the derived figures computed from it."""
+    session.info.pop(_CACHE_KEY, None)
+
+
 def latest_as_of(session: Session) -> date:
     """The most recent balance date in the database. The app's 'today'."""
-    value = session.execute(select(func.max(Balance.as_of))).scalar_one_or_none()
-    if value is None:
-        return datetime.now(timezone.utc).date()
-    return value if isinstance(value, date) else date.fromisoformat(str(value))
+
+    def compute() -> date:
+        value = session.execute(select(func.max(Balance.as_of))).scalar_one_or_none()
+        if value is None:
+            return datetime.now(timezone.utc).date()
+        return value if isinstance(value, date) else date.fromisoformat(str(value))
+
+    return _memo(session, ("latest_as_of",), compute)
 
 
 class FxBook:
@@ -226,9 +259,15 @@ def _deposit_rates(session: Session, as_of: date) -> dict[tuple[str, str], float
     return {(entity_id, ccy): float(rate) for entity_id, ccy, rate in rows}
 
 
-def entity_financials(session: Session, as_of: date | None = None) -> dict[str, EntityFinancials]:
+def entity_financials(
+    session: Session, as_of: date | None = None
+) -> dict[str, EntityFinancials]:
     """Decompose every entity's position. The single source for all cash figures."""
     as_of = as_of or latest_as_of(session)
+    return _memo(session, ("entity_financials", as_of), lambda: _entity_financials(session, as_of))
+
+
+def _entity_financials(session: Session, as_of: date) -> dict[str, EntityFinancials]:
     fx = FxBook(session, as_of)
 
     balances = _entity_balances(session, as_of)
