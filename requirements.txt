@@ -2,3 +2,7 @@ fastapi>=0.115
 uvicorn[standard]>=0.30
 sqlalchemy>=2.0
 pydantic>=2.8
+# Postgres driver. The serverless deployment cannot keep a SQLite file:
+# its filesystem is ephemeral and requests fan out across instances that
+# must all see the same audit chain. Unused when DATABASE_URL is unset.
+psycopg[binary]>=3.2

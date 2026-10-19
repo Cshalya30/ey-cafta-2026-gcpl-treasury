@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 
+from ..db import serialise_writes
 from ..models import Account, Entity, Pool, PoolMember, Proposal, ProposalCheck
 from ..repositories.scope import Scope, current_scope
 from ..schemas.common import CitationOut, Coverage, RouteOut
@@ -333,6 +334,10 @@ def create_proposal(
             },
         )
 
+    # Same read-then-insert hazard as the audit chain: two concurrent creates
+    # read the same count and collide on the primary key, which surfaces as a
+    # 500 rather than a proposal.
+    serialise_writes(scope.session)
     serial = scope.session.execute(select(func.count()).select_from(Proposal)).scalar_one()
     proposal_id = f"PRP-{serial + 1:04d}"
     stamp = _now()

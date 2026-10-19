@@ -16,12 +16,6 @@ vendor TMS the group selects at month four.
   <img alt="Moves money" src="https://img.shields.io/badge/moves%20money-never-da3633?style=flat-square&labelColor=161616" />
 </p>
 
-<p>
-  <a href="https://gcpl-treasury-command.onrender.com"><strong>Open the live demo →</strong></a>
-</p>
-
-<sub>Hosted on a free instance that sleeps when idle; the first load after a quiet spell takes up to a minute.</sub>
-
 <img src="docs/screenshots/canvas.png" alt="The Canvas register: twelve entities drawn as a node graph, with animated red edges tracing the Cash Leak between surplus and borrowing entities, and a side panel quantifying it annualised." width="100%" />
 
 <sub>The Canvas register. Red edges are the Cash Leak: surplus in one entity, external borrowing in another.</sub>
@@ -287,31 +281,57 @@ time, and runs as a non-root user. The generator asserts INV-1 through INV-3
 and exits non-zero, so a broken invariant fails the build rather than reaching
 a judge.
 
-**Render** is set up as a blueprint: push to `master`, point Render at
-`render.yaml`, and it builds the Dockerfile and redeploys on every push. The
-same image runs unchanged on Railway, Fly.io or a Hugging Face Docker Space —
-`$PORT` is read from the environment, defaulting to 8000.
+That container still works and `render.yaml` still deploys it. The hosted demo
+does not use it, because a free container sleeps: fifteen minutes idle, then
+thirty to sixty seconds to wake, on a link a judging panel opens at a time
+nobody controls.
+
+**The deployment is serverless, on Postgres.** The database is chosen by
+`DATABASE_URL`: set, it is Postgres; unset, it is the SQLite file, so the two
+commands above are unaffected. Serverless was ruled out at first for a real
+reason — SQLite on an ephemeral per-instance filesystem forks the audit chain —
+and the fix was to move the database, not the architecture.
 
 | Variable | Deployment value | Why |
 |---|---|---|
+| `DATABASE_URL` | the pooled Postgres URL | Without it a serverless instance would open a private SQLite file and fork the chain, so the app refuses to boot instead |
 | `GCPL_ENV` | `dev` | Writes stay open. There is no sign-in screen in `web/src`, and the persona switcher *is* the demonstration. ABAC and capability rules are enforced either way |
 | `GCPL_FORCE_HTTPS` | `true` | Sends HSTS and redirects plain HTTP. `/health` is exempt so a platform probe cannot loop |
-| `GCPL_SESSION_SECRET` | generated | Otherwise random per boot |
-| `GCPL_DB_PATH` | `/app/data/gcpl.db` | Set in the image |
+| `GCPL_SESSION_SECRET` | any long random string | Otherwise it is random per boot, and per instance |
 
-The filesystem is ephemeral: a restart returns the demo to the seeded state,
-which is what you want for a link strangers can write to.
+Seed the database once, from your own machine:
+
+```bash
+DATABASE_URL='postgresql://…' python scripts/generate_data.py --seed 42
+```
+
+The generator drops and rebuilds the schema, so re-running it is how you reset
+the demo. It asserts INV-1 through INV-3 and exits non-zero, so a bad dataset
+never reaches the deployment.
+
+One consequence worth stating: the rate limiter keeps its counters in process,
+so on serverless it is per instance rather than global. It is not load-bearing
+in `dev` mode, where writes are open by design, but it is not the control it is
+in the container.
+
+Writes now persist, because the data no longer lives on the instance. A link
+strangers can write to will accumulate their proposals, and re-running the
+generator against `DATABASE_URL` is how you clear them — it drops and rebuilds
+the schema from the seed.
 
 `/docs` is open on the deployment and closed when `GCPL_ENV=prod`, exactly as
 FastAPI's own page was. It loads nothing from a third-party host, so it works
 behind the same policy as the rest of the application.
 
 > [!NOTE]
-> SQLite and a hash-chained audit trail need one durable writer. That rules out
-> serverless platforms whose instances are ephemeral and fan out per request:
-> two clicks could land on different instances and fork the chain, and the
-> product's own verifier would then correctly report it broken. See
-> [decision 0007](docs/decisions/0007-one-origin-and-two-content-security-policies.md).
+> A hash-chained audit trail needs one durable writer. On SQLite that ruled out
+> serverless entirely: instances are ephemeral and fan out per request, so two
+> clicks could land on different instances and fork the chain. Moving the data
+> to Postgres removes the ephemeral half of that problem, and appends are
+> serialised with a transaction-scoped advisory lock to remove the other half —
+> read-then-insert forks the chain under any concurrent writer, which SQLite's
+> single writer had been hiding. See
+> [decision 0009](docs/decisions/0009-postgres-for-the-deployment-sqlite-for-the-demo.md).
 
 ---
 
@@ -359,6 +379,7 @@ Non-obvious choices are written down rather than defended from memory:
 | 0006 | [The motion system](docs/decisions/0006-motion-system.md) |
 | 0007 | [One origin, and two content security policies](docs/decisions/0007-one-origin-and-two-content-security-policies.md) |
 | 0008 | [The API reference page is served from this origin](docs/decisions/0008-the-api-reference-page-is-served-from-this-origin.md) |
+| 0009 | [Postgres for the deployment, SQLite for the demo](docs/decisions/0009-postgres-for-the-deployment-sqlite-for-the-demo.md) |
 
 ---
 

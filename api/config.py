@@ -17,6 +17,24 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
 
 
+def normalise_database_url(raw: str | None) -> str | None:
+    """Return a SQLAlchemy URL, or None when nothing is configured.
+
+    Hosted Postgres providers hand out `postgres://`, which SQLAlchemy has not
+    accepted since 1.4, and a bare `postgresql://` would select psycopg2 rather
+    than the psycopg 3 driver this project installs. Both are rewritten here so
+    the value can be pasted from a dashboard unedited — the likeliest way for
+    this to go wrong is a human retyping a connection string.
+    """
+    if not raw or not raw.strip():
+        return None
+    url = raw.strip()
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix) :]
+    return url
+
+
 def _flag(name: str, default: bool = False) -> bool:
     raw = os.environ.get(name)
     if raw is None:
@@ -58,7 +76,20 @@ class Settings:
         return None if self.is_prod else "/docs"
 
     def database_url(self) -> str:
-        return f"sqlite:///{self.db_path.as_posix()}"
+        """The engine URL.
+
+        DATABASE_URL wins when it is set, which is how the serverless
+        deployment reaches Postgres. Without it the application keeps its
+        SQLite file, so `python scripts/generate_data.py && uvicorn` still
+        needs no database server and the two-command demo is unchanged.
+        """
+        return normalise_database_url(os.environ.get("DATABASE_URL")) or (
+            f"sqlite:///{self.db_path.as_posix()}"
+        )
+
+    @property
+    def is_sqlite(self) -> bool:
+        return self.database_url().startswith("sqlite")
 
 
 settings = Settings()

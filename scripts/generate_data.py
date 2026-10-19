@@ -14,6 +14,7 @@ script exits non-zero if any of them fails.
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import random
 import sys
@@ -27,10 +28,12 @@ if str(REPO_ROOT) not in sys.path:
 from sqlalchemy import select, text  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
+from api.config import normalise_database_url  # noqa: E402
 from api.db import init_db, make_engine  # noqa: E402
 from api.models import (  # noqa: E402
     Account,
     AuditEvent,
+    Base,
     Balance,
     Bank,
     BankCountryCoverage,
@@ -965,8 +968,15 @@ def assert_invariants(session: Session) -> list[str]:
     assert chain.intact, f"generated audit chain must be intact (broken at {chain.broken_at})"
     passed.append(f"Audit chain intact across {chain.checked} events")
 
+    # CASE rather than SUM(feed_status = 'live'): SQLite scores a comparison as
+    # 1 or 0, Postgres returns a boolean and refuses to sum it. This line
+    # computes INV-3, so the dialect-specific form would have taken the cash
+    # visibility headline down with it.
     visibility = session.execute(
-        text("SELECT CAST(SUM(feed_status = 'live') AS REAL) / COUNT(*) FROM account")
+        text(
+            "SELECT CAST(SUM(CASE WHEN feed_status = 'live' THEN 1 ELSE 0 END) AS FLOAT)"
+            " / COUNT(*) FROM account"
+        )
     ).scalar_one()
     assert 0.0 < visibility < 1.0, "cash visibility must be a computed fraction, not 0 or 1"
     passed.append(f"Cash visibility computed from feed status: {visibility:.1%}")
@@ -977,17 +987,32 @@ def assert_invariants(session: Session) -> list[str]:
 # ───────────────────────── orchestration ─────────────────────────
 
 
-def generate(db_path: Path, seed: int) -> dict:
+def generate(target: Path | str, seed: int) -> dict:
+    """Write the dataset to a SQLite file or to any SQLAlchemy URL.
+
+    The same seed produces the same figures either way. Only a SQLite file is
+    byte-identical between runs; a server-side database has its own physical
+    layout, so determinism is asserted on the data rather than the bytes.
+    """
     rng = random.Random(seed)
+    is_file = isinstance(target, Path)
 
-    if db_path.exists():
-        db_path.unlink()
-    for suffix in ("-wal", "-shm"):
-        sidecar = db_path.with_name(db_path.name + suffix)
-        if sidecar.exists():
-            sidecar.unlink()
+    if is_file:
+        if target.exists():
+            target.unlink()
+        for suffix in ("-wal", "-shm"):
+            sidecar = target.with_name(target.name + suffix)
+            if sidecar.exists():
+                sidecar.unlink()
 
-    engine = make_engine(db_path)
+    engine = make_engine(target)
+
+    if not is_file:
+        # No file to delete, so the previous dataset is dropped explicitly.
+        # Re-seeding has to be repeatable: appending to a populated schema
+        # would break the audit chain's genesis and every uniqueness rule.
+        Base.metadata.drop_all(engine)
+
     init_db(engine)
 
     with Session(engine) as session:
@@ -1043,11 +1068,13 @@ def generate(db_path: Path, seed: int) -> dict:
             "checks": checks,
         }
 
-    # VACUUM normalises page layout, so two runs of the same seed are byte-identical.
-    with engine.connect() as conn:
-        conn.exec_driver_sql("PRAGMA wal_checkpoint(TRUNCATE)")
-        conn.exec_driver_sql("PRAGMA journal_mode = DELETE")
-        conn.exec_driver_sql("VACUUM")
+    if is_file:
+        # VACUUM normalises page layout, so two runs of the same seed are
+        # byte-identical. Neither pragma exists outside SQLite.
+        with engine.connect() as conn:
+            conn.exec_driver_sql("PRAGMA wal_checkpoint(TRUNCATE)")
+            conn.exec_driver_sql("PRAGMA journal_mode = DELETE")
+            conn.exec_driver_sql("VACUUM")
     engine.dispose()
 
     return counts
@@ -1060,19 +1087,37 @@ def main(argv: list[str] | None = None) -> int:
         "--out",
         type=Path,
         default=REPO_ROOT / "data" / "gcpl.db",
-        help="Output path. Defaults to data/gcpl.db inside the repository.",
+        help="SQLite output path. Defaults to data/gcpl.db inside the repository.",
+    )
+    parser.add_argument(
+        "--database-url",
+        default=None,
+        help=(
+            "Seed a server database instead of a SQLite file. Defaults to "
+            "DATABASE_URL from the environment when that is set."
+        ),
     )
     args = parser.parse_args(argv)
 
+    # A URL wins over the file. Without this, seeding a deployment would
+    # silently rewrite the local SQLite file and leave the server empty, and
+    # the deployment would answer every request with a missing-table error.
+    url = normalise_database_url(args.database_url or os.environ.get("DATABASE_URL"))
+    target: Path | str = url or args.out
+
     try:
-        counts = generate(args.out, args.seed)
+        counts = generate(target, args.seed)
     except AssertionError as failure:
         print(f"INVARIANT FAILED: {failure}", file=sys.stderr)
         return 1
 
-    shown = args.out
-    if args.out.is_absolute() and args.out.is_relative_to(REPO_ROOT):
-        shown = args.out.relative_to(REPO_ROOT)
+    if url:
+        # Never print the URL: it carries the password.
+        shown = "the configured database"
+    else:
+        shown = args.out
+        if args.out.is_absolute() and args.out.is_relative_to(REPO_ROOT):
+            shown = args.out.relative_to(REPO_ROOT)
 
     print(f"Wrote {shown}")
     print(

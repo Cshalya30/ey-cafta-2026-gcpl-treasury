@@ -6,6 +6,8 @@ money, holds no payment credentials, and carries synthetic data only.
 
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,6 +22,27 @@ from .security import HttpsRedirectMiddleware, SecurityHeadersMiddleware
 from .static import mount_spa
 
 API_PREFIX = "/api/v1"
+
+
+def _refuse_sqlite_on_serverless() -> None:
+    """Checked at import, not at startup.
+
+    The serverless filesystem is read-only apart from /tmp, and /tmp is
+    per-instance, so a SQLite file there would either fail to open or give each
+    instance a private database and a forked audit chain. Import time rather
+    than a lifespan hook because a platform that skips lifespan would skip the
+    check too, and the first request would fail with an opaque 500 instead of
+    this sentence.
+    """
+    if os.environ.get("VERCEL") and settings.is_sqlite:
+        raise RuntimeError(
+            "DATABASE_URL is not set on this deployment. A serverless instance "
+            "cannot hold the SQLite file: the filesystem is ephemeral and "
+            "per-instance, which would fork the audit chain."
+        )
+
+
+_refuse_sqlite_on_serverless()
 
 DESCRIPTION = """
 The future-state treasury operating model of Global Consumer Products Ltd,
@@ -65,7 +88,12 @@ app.add_middleware(HttpsRedirectMiddleware)
 
 @app.on_event("startup")
 def _startup() -> None:
-    init_db(get_engine())
+    if settings.is_sqlite:
+        # The file may not exist yet on a fresh clone; creating the schema is
+        # cheap and idempotent. Against Postgres the generator has already
+        # created and seeded it, and create_all would spend a reflection round
+        # trip on every cold start to learn that.
+        init_db(get_engine())
 
 
 @app.on_event("shutdown")

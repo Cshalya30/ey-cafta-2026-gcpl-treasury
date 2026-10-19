@@ -1,0 +1,29 @@
+[project]
+name = "gcpl-treasury-command"
+version = "2.0.0"
+description = "A Phase 0 treasury control layer. Not a Treasury Management System."
+requires-python = ">=3.12"
+
+# Kept identical to requirements.txt, which the Dockerfile and local setup use.
+# test_the_two_dependency_lists_agree asserts the two lists agree, because a drift here
+# fails at deploy time on someone else's machine rather than in review.
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "sqlalchemy>=2.0",
+    "pydantic>=2.8",
+    "psycopg[binary]>=3.2",
+]
+
+[tool.vercel]
+# The application is a package, so the entrypoint is named rather than found by
+# filename. Vercel then routes every request to it and lets the FastAPI router
+# match the path, which is the same shape as the container: one process serving
+# /api/v1, /health, /docs and the built app.
+entrypoint = "api.main:app"
+
+[tool.vercel.scripts]
+# Runs after dependencies install and before deploy. web/dist is gitignored, so
+# without this the static mount would find nothing and every route would answer
+# with the API's 404 instead of the console.
+build = "cd web && npm ci && npm run build"

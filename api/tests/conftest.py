@@ -32,11 +32,29 @@ def source_db() -> Path:
     return SOURCE_DB
 
 
+@pytest.fixture(autouse=True)
+def never_touch_a_live_database(monkeypatch) -> None:
+    """Applied to every test, not only the ones taking the client fixture."""
+    _no_live_database(monkeypatch)
+
+
 @pytest.fixture
 def db_path(source_db: Path, tmp_path: Path) -> Path:
     target = tmp_path / "gcpl.db"
     shutil.copy2(source_db, target)
     return target
+
+
+def _no_live_database(monkeypatch) -> None:
+    """Point the suite away from any configured server database.
+
+    DATABASE_URL takes precedence over the SQLite path, and it is read from the
+    environment on every call. Seeding a deployment means exporting it, and
+    running pytest in that same shell would send these tests at the live
+    database — including the ones that deliberately tamper with audit_event and
+    update a deposit rate.
+    """
+    monkeypatch.delenv("DATABASE_URL", raising=False)
 
 
 @pytest.fixture
@@ -56,6 +74,7 @@ def session(engine) -> Iterator[Session]:
 
 @pytest.fixture
 def client(db_path: Path, monkeypatch) -> Iterator[TestClient]:
+    _no_live_database(monkeypatch)
     monkeypatch.setenv("GCPL_DB_PATH", str(db_path))
 
     import api.config

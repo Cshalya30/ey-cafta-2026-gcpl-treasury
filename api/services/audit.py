@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..db import serialise_writes
 from ..models import AuditEvent, Persona
 
 GENESIS_HASH = "0" * 64
@@ -52,6 +53,9 @@ def append(
     ts: str | None = None,
 ) -> AuditEvent:
     """Append one event, chained to the current tail. Flushes so seq is assigned."""
+    # Read-then-insert. Without this the chain forks under concurrent writers.
+    serialise_writes(session)
+
     prev = session.execute(
         select(AuditEvent).order_by(AuditEvent.seq.desc()).limit(1)
     ).scalar_one_or_none()
