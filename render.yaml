@@ -11,7 +11,10 @@ services:
     name: gcpl-treasury-command
     runtime: docker
     plan: free
-    region: oregon
+    # Singapore is the closest region to judges in India; Oregon would add
+    # roughly 200ms to every request. A service's region cannot be changed
+    # after it is created, so this has to be right before the first apply.
+    region: singapore
     branch: master
     dockerfilePath: ./Dockerfile
 
