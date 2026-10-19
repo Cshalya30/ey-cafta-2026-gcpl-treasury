@@ -339,3 +339,35 @@ def test_the_function_region_is_pinned():
         "trip costs roughly 220ms."
     )
     assert len(regions) == 1, "the Hobby plan allows exactly one region"
+
+
+def test_the_deployment_config_carries_no_keys_outside_the_schema():
+    """JSON has no comments, and Vercel rejects properties it does not define.
+
+    A "comment" array was added here to explain the region choice. The file
+    stopped being applied, the function silently stayed in the default region,
+    and the only symptom was that database-backed endpoints were slow — while
+    the build succeeded and /health answered in 0.3s. Explanations belong in
+    docs/decisions, not in a config file that is validated against a schema.
+    """
+    import json
+
+    config = json.loads((REPO_ROOT / "vercel.json").read_text(encoding="utf-8"))
+
+    allowed_top = {
+        "$schema", "regions", "services", "rewrites", "redirects", "headers",
+        "cleanUrls", "trailingSlash", "routes", "crons", "daemons", "git", "public",
+    }
+    assert not set(config) - allowed_top, (
+        "unknown top-level keys: " + ", ".join(sorted(set(config) - allowed_top))
+    )
+
+    allowed_service = {
+        "root", "framework", "runtime", "entrypoint", "command", "installCommand",
+        "buildCommand", "devCommand", "ignoreCommand", "outputDirectory", "bindings",
+        "functions", "headers", "redirects", "rewrites", "routes", "cleanUrls",
+        "trailingSlash",
+    }
+    for name, service in config["services"].items():
+        unknown = set(service) - allowed_service
+        assert not unknown, f"service {name!r} has unknown keys: {sorted(unknown)}"

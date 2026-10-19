@@ -86,6 +86,30 @@ middleware keeps static files in the function rather than promoting them to the
 CDN — which is the behaviour we need, because CDN-served files bypass
 middleware, and the two content security policies live in middleware.
 
+### The function runs beside the database
+
+Vercel places functions in `iad1` unless told otherwise. The database is in
+`ap-southeast-1`. Every query therefore crossed the Pacific at roughly 220ms,
+and the endpoints that issue several of them paid it per query: `/api/v1/kpis`
+took 9.3 seconds, `/entities` 4.7, `/accounts` 3.3.
+
+What makes this worth recording is how it hid. `/health` and the application
+shell touch no database and answered in 0.3 seconds, so every smoke test passed
+and the deployment looked healthy while the console sat on loading skeletons.
+The evidence was in a response header — `x-vercel-id: bom1::iad1::…`, meaning
+the request entered at Mumbai and executed in Washington.
+
+The region is pinned to `sin1`, beside the database, which is also the closer
+of the two to a panel in India. Static files are served from every region
+regardless, so the shell still arrives from the Mumbai edge.
+
+The first attempt at this failed silently in its own way. The region was set
+alongside a `"comment"` array explaining why — and Vercel validates
+`vercel.json` against a schema that has no such property, so the file was not
+applied and the function stayed in Washington. JSON has no comments. The
+reasoning belongs here; `api/tests/test_portability.py` now asserts that the
+file carries no key outside the schema.
+
 ## Consequences
 
 The suite runs on SQLite and the deployment runs on Postgres, so the tests do

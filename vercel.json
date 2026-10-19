@@ -1,17 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-
-  "comment": [
-    "The function runs beside the database, not beside the visitor.",
-    "Vercel defaults to iad1 (Washington). The database is in ap-southeast-1",
-    "(Singapore), so every query crossed the Pacific: endpoints issuing many",
-    "sequential queries took three to nine seconds while /health, which",
-    "touches nothing, answered in 0.3. Static files are served from every",
-    "region regardless, so the shell still arrives from the Mumbai edge.",
-    "Singapore is also the closer of the two to a panel in India."
-  ],
   "regions": ["sin1"],
-
   "services": {
     "app": {
       "root": ".",
@@ -25,7 +14,6 @@
       }
     }
   },
-
   "rewrites": [
     { "source": "/(.*)", "destination": { "service": "app" } }
   ]
