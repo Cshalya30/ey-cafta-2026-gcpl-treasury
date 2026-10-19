@@ -269,3 +269,54 @@ def test_the_suite_cannot_reach_a_configured_server_database():
     assert "DATABASE_URL" not in os.environ, (
         "an autouse fixture in conftest.py should have removed it"
     )
+
+
+# ───────────────────────── deployment configuration ─────────────────────────
+
+
+def test_the_deployment_declares_one_service_serving_everything():
+    """Two services would put the app on the CDN, and the CDN skips middleware.
+
+    The two content security policies, the security headers and the HTTPS
+    redirect all live in middleware. A frontend served directly from the CDN
+    bypasses the function, so those responses would carry none of them, and the
+    tests asserting they are present would keep passing while the deployment
+    shipped without them.
+    """
+    import json
+
+    config = json.loads((REPO_ROOT / "vercel.json").read_text(encoding="utf-8"))
+    services = config["services"]
+    assert len(services) == 1, (
+        "a second service would be served from the CDN, without middleware: "
+        + ", ".join(sorted(services))
+    )
+
+    name, service = next(iter(services.items()))
+    assert service["root"] == "."
+    assert any(
+        rule["source"] == "/(.*)" and rule["destination"] == {"service": name}
+        for rule in config["rewrites"]
+    ), "without a catch-all rewrite the service receives no public traffic at all"
+
+
+def test_the_entrypoint_agrees_across_both_files():
+    """vercel.json and pyproject.toml both name it; they must not drift."""
+    import json
+    import tomllib
+
+    config = json.loads((REPO_ROOT / "vercel.json").read_text(encoding="utf-8"))
+    declared = config["services"]["app"]["entrypoint"]
+
+    pyproject = tomllib.loads(
+        (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    )
+    assert declared == pyproject["tool"]["vercel"]["entrypoint"]
+
+    module, _, variable = declared.partition(":")
+    imported = __import__(module, fromlist=[variable])
+    from fastapi import FastAPI
+
+    assert isinstance(getattr(imported, variable), FastAPI), (
+        f"{declared} must resolve to the FastAPI instance Vercel loads"
+    )

@@ -1,8 +1,21 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "api/main.py": {
-      "excludeFiles": "{api/tests/**,web/node_modules/**,web/src/**,web/e2e/**,web/tests/**,web/public/**,docs/**,scripts/**,data/**,.venv/**,**/__pycache__/**}"
+
+  "services": {
+    "app": {
+      "root": ".",
+      "framework": "fastapi",
+      "entrypoint": "api.main:app",
+      "buildCommand": "cd web && npm ci && npm run build",
+      "functions": {
+        "api/main.py": {
+          "excludeFiles": "{api/tests/**,web/node_modules/**,web/src/**,web/e2e/**,web/tests/**,docs/**,scripts/**,data/**,.venv/**,**/__pycache__/**}"
+        }
+      }
     }
-  }
+  },
+
+  "rewrites": [
+    { "source": "/(.*)", "destination": { "service": "app" } }
+  ]
 }
