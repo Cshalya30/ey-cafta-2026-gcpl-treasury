@@ -11,6 +11,7 @@ import { Console } from '@/registers/console/Console';
 import { Terminal } from '@/registers/terminal/Terminal';
 import { Brief } from '@/registers/brief/Brief';
 import { Cockpit } from '@/registers/cockpit/Cockpit';
+import { Method } from '@/registers/method/Method';
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
       { path: 'brief', element: <Brief /> },
       { path: 'cockpit', element: <Cockpit /> },
       { path: 'cockpit/:entityId', element: <Cockpit /> },
+      { path: 'method', element: <Method /> },
       { path: '*', element: <NotFound /> },
     ],
   },

@@ -38,7 +38,7 @@ vendor TMS the group selects at month four.
 [Run it](#run-it) ·
 [What you are looking at](#what-you-are-looking-at) ·
 [The generator](#what-the-generator-produces) ·
-[The five registers](#the-five-registers) ·
+[The registers](#the-five-registers) ·
 [The four engines](#the-four-engines) ·
 [Personas](#personas) ·
 [Tests](#tests) ·
@@ -178,7 +178,11 @@ demo reproducible.
 
 ---
 
-## The five registers
+## The registers
+
+`/method` is the one to open first if you have five minutes: it walks the
+system end to end, from a bank feed to a verifiable audit event, and says what
+each step is allowed to assume about the one before it.
 
 | Route | Register | What it is for |
 |---|---|---|
@@ -189,6 +193,7 @@ demo reproducible.
 | `/terminal` | **Terminal** | Liquidity meters, work queue, blotters, kernel log with chain verification |
 | `/brief` | **Brief** | CFO narrative, nine KPI posters, wave tracker, Day-1 kit |
 | `/cockpit/:id` | **Cockpit** | A single entity's own view, including what the group sees about it |
+| `/method` | **Method** | How the system works: the seven-step pipeline, the four engines, the control gate and the chain |
 
 Switching register preserves the active entity, filters and persona. Every
 stateful view is deep-linkable, because treasury users paste views to approvers.

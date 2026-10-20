@@ -1,0 +1,81 @@
+/**
+ * Motion for the Method register.
+ *
+ * Every rule animates transform or opacity only, and every duration resolves
+ * through a token in motion.css, so `prefers-reduced-motion` collapses all of
+ * it to 1ms with no rule of its own here.
+ *
+ * Deliberately no infinite animation. The Cash Leak edge on the Canvas is the
+ * only looping motion in this product, because a loop that never resolves is
+ * a thing the eye keeps returning to; a walkthrough that plays once and can be
+ * replayed respects the reader's attention and says the same thing.
+ */
+
+@layer components {
+  /* Each stage of the pipeline arrives in order, once. --i is the index. */
+  .mth-stage {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+    animation: mth-arrive var(--t-enter) var(--e-out) forwards;
+    animation-delay: calc(var(--i, 0) * var(--t-stagger));
+  }
+
+  /* The pulse that travels the connector after a stage lands. */
+  .mth-spark {
+    transform-origin: left center;
+    transform: scaleX(0);
+    opacity: 0;
+    animation: mth-travel var(--t-travel) var(--e-inout) forwards;
+    animation-delay: calc(var(--i, 0) * var(--t-stagger) + var(--t-reveal));
+  }
+
+  /* The active stage during the walkthrough. Transform and opacity only: a
+     box-shadow transition would paint, and the gate test forbids it. */
+  .mth-live {
+    transform: scale(1.015);
+  }
+
+  .mth-dim {
+    opacity: 0.45;
+  }
+
+  .mth-stage,
+  .mth-live,
+  .mth-dim {
+    transition:
+      transform var(--t-reveal) var(--e-out),
+      opacity var(--t-reveal) var(--e-out);
+  }
+
+  /* A chain link settling into place behind the one before it. */
+  .mth-block {
+    opacity: 0;
+    transform: translateX(-8px);
+    animation: mth-link var(--t-enter) var(--e-out) forwards;
+    animation-delay: calc(var(--i, 0) * var(--t-stagger));
+  }
+
+  @keyframes mth-arrive {
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes mth-travel {
+    40% {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes mth-link {
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}

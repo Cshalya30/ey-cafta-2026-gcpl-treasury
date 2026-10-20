@@ -11,6 +11,7 @@ const REGISTERS = [
   { path: '/terminal', name: 'Terminal' },
   { path: '/brief', name: 'Brief' },
   { path: '/cockpit', name: 'Cockpit' },
+  { path: '/method', name: 'Method' },
 ] as const;
 
 /** Accept the storage notice so it does not sit over the footer in a snapshot. */

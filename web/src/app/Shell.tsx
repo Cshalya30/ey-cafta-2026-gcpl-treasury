@@ -14,6 +14,7 @@ import {
   Building2,
   Command,
   Network,
+  Route,
   Terminal as TerminalIcon,
 } from 'lucide-react';
 import { useAppState } from '@/lib/hooks';
@@ -29,6 +30,7 @@ const REGISTERS = [
   { to: '/terminal', label: 'Terminal', icon: TerminalIcon, hint: 'Ops console and blotters' },
   { to: '/brief', label: 'Brief', icon: BookOpen, hint: 'CFO narrative and KPIs' },
   { to: '/cockpit', label: 'Cockpit', icon: Activity, hint: 'Single-entity scoped view' },
+  { to: '/method', label: 'Method', icon: Route, hint: 'How the system works' },
 ] as const;
 
 const DISPLAYS: DisplayCurrency[] = ['USD', 'INR', 'native'];
