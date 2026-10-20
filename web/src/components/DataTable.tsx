@@ -7,7 +7,7 @@
  * rather than a modal, because a modal hides the records being compared against.
  */
 
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import {
   flexRender,
   getCoreRowModel,
@@ -35,6 +35,11 @@ export type DataTableProps<T> = {
   virtualizeFrom?: number;
   emptyState?: ReactNode;
   height?: number;
+  /** Called with the rows actually on screen, in display order, after the
+   * sort and the global filter have both been applied — so a caller that
+   * needs "what the reader is currently looking at" (an export, say) never
+   * has to re-derive sorting or filtering itself. */
+  onVisibleRowsChange?: (rows: T[]) => void;
 };
 
 export function DataTable<T>({
@@ -50,6 +55,7 @@ export function DataTable<T>({
   virtualizeFrom = 50,
   emptyState,
   height = 520,
+  onVisibleRowsChange,
 }: DataTableProps<T>) {
   const table = useReactTable({
     data,
@@ -65,6 +71,15 @@ export function DataTable<T>({
 
   const rows = table.getRowModel().rows;
   const rowHeight = dense ? 24 : 32;
+
+  useEffect(() => {
+    onVisibleRowsChange?.(rows.map((row) => row.original));
+    // `rows` is the derived row model; it is a new array only when the data,
+    // the sort or the filter actually changed, which is exactly the signal
+    // an export button needs. Naming the callback itself would re-run this
+    // on every render of a caller that does not memoize it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows]);
   const virtualize = rows.length > virtualizeFrom;
 
   const header = useMemo(

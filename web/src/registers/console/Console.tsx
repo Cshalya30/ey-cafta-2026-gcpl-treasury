@@ -9,7 +9,7 @@
 import { useMemo, useState } from 'react';
 import { useQueryState } from 'nuqs';
 import type { ColumnDef, SortingState } from '@tanstack/react-table';
-import { Calculator, Search } from 'lucide-react';
+import { Calculator, Download, Search } from 'lucide-react';
 import {
   useAccounts,
   useAppState,
@@ -23,6 +23,7 @@ import { CoverageNote, ErrorState, FilteredEmpty, SkeletonRows, StaleBadge } fro
 import { DataTable } from '@/components/DataTable';
 import { Figure, UsdFigure } from '@/components/Figure';
 import { date, pct, titleCase } from '@/lib/format';
+import { downloadCsv, toCsv } from '@/lib/csv';
 import { Entity360 } from '@/features/entity360/Entity360';
 import type { Account } from '@/lib/types';
 
@@ -220,6 +221,10 @@ function BankingRegister({ onSelect }: { onSelect: (id: string) => void }) {
   const entities = useEntities();
   const state = useAppState();
   const score = useScoreEstate();
+  // What DataTable actually has on screen right now: sorted, and with the
+  // free-text search applied. The entity/feed/disposition filters above are
+  // already baked into `accounts.data` itself, server-side.
+  const [visibleRows, setVisibleRows] = useState<Account[]>([]);
 
   const sorting: SortingState = [{ id: sortKey, desc: sortDir === 'desc' }];
   const canScore = ['P2', 'P6'].includes(state.data?.persona.id ?? '');
@@ -383,6 +388,30 @@ function BankingRegister({ onSelect }: { onSelect: (id: string) => void }) {
   const rows = accounts.data ?? [];
   const totalCost = rows.reduce((sum, row) => sum + row.annual_cost_usd, 0);
 
+  const countryByEntity = new Map(
+    (entities.data ?? []).map((entity) => [entity.id, entity.country_name]),
+  );
+
+  const exportCsv = () => {
+    const csv = toCsv(visibleRows, [
+      { header: 'Account', value: (r) => r.iban_masked },
+      { header: 'Entity', value: (r) => r.entity_id },
+      { header: 'Bank', value: (r) => r.bank_name },
+      { header: 'Country', value: (r) => countryByEntity.get(r.entity_id) },
+      { header: 'Currency', value: (r) => r.currency },
+      { header: 'Purpose', value: (r) => titleCase(r.purpose) },
+      { header: 'T1 panel fit', value: (r) => r.score_panel },
+      { header: 'T2 uniqueness', value: (r) => r.score_unique },
+      { header: 'T3 activity', value: (r) => r.score_active },
+      { header: 'T4 legal need', value: (r) => r.score_legal },
+      { header: 'Total score', value: (r) => r.score_total },
+      { header: 'Disposition', value: (r) => (r.disposition ? titleCase(r.disposition) : '') },
+      { header: 'Annual cost (USD)', value: (r) => r.annual_cost_usd },
+      { header: 'Last movement', value: (r) => r.last_movement ?? 'never' },
+    ]);
+    downloadCsv(`gcpl-accounts-${new Date().toISOString().slice(0, 10)}.csv`, csv);
+  };
+
   return (
     <Panel
       title="Banking register"
@@ -392,19 +421,30 @@ function BankingRegister({ onSelect }: { onSelect: (id: string) => void }) {
           : `${rows.length} accounts · ${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(totalCost)} annual cost`
       }
       actions={
-        <Button
-          variant="secondary"
-          disabled={!canScore || score.isPending}
-          title={
-            canScore
-              ? 'Run the four-test scorer across the estate'
-              : 'Only the Group Treasurer and the Risk and Control Analyst may run the scorer'
-          }
-          onClick={() => score.mutate({ persist: true })}
-        >
-          <Calculator size={12} aria-hidden />
-          {score.isPending ? 'Scoring…' : 'Run scorer'}
-        </Button>
+        <>
+          <Button
+            variant="ghost"
+            disabled={!visibleRows.length}
+            title="Download the rows currently shown, in their current sort order, as CSV"
+            onClick={exportCsv}
+          >
+            <Download size={12} aria-hidden />
+            Export CSV
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={!canScore || score.isPending}
+            title={
+              canScore
+                ? 'Run the four-test scorer across the estate'
+                : 'Only the Group Treasurer and the Risk and Control Analyst may run the scorer'
+            }
+            onClick={() => score.mutate({ persist: true })}
+          >
+            <Calculator size={12} aria-hidden />
+            {score.isPending ? 'Scoring…' : 'Run scorer'}
+          </Button>
+        </>
       }
       className="h-full"
     >
@@ -493,6 +533,7 @@ function BankingRegister({ onSelect }: { onSelect: (id: string) => void }) {
           }}
           globalFilter={search}
           getRowId={(row) => row.id}
+          onVisibleRowsChange={setVisibleRows}
           dense
           height={460}
           emptyState={<FilteredEmpty filters={activeFilters} onClear={clearFilters} />}
