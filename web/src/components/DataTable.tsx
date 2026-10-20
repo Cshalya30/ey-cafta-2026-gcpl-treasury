@@ -116,6 +116,10 @@ export function DataTable<T>({
         ))}
       </thead>
     ),
+    // `table`'s identity is stable across a sort change; `sorting` forces the
+    // header to re-render for the arrow glyph even though it is read through
+    // `table`, not named directly in this body.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [table, sorting],
   );
 

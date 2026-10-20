@@ -233,8 +233,27 @@
   }
 
   /* ── xyflow surface overrides ──────────────────────────────────── */
+  /* xyflow themes itself through its own --xy-* custom properties, each
+     falling back through a `-props` (per-instance prop) and a `-default`
+     (vendor light theme) slot before reaching our value. Earlier this set
+     `background`/`box-shadow` directly on xyflow's own selectors instead:
+     xyflow also declares those exact properties on those exact selectors, so
+     cascade-layer order never got a chance to decide a winner, and vendor's
+     light-mode default painted the minimap and the controls white on this
+     near-black canvas. Setting the custom property it reads removes the
+     collision rather than trying to out-rank it. */
   .react-flow {
-    background: var(--surface-1);
+    --xy-background-color: var(--surface-1);
+    --xy-minimap-background-color: var(--surface-2);
+    --xy-minimap-node-background-color: var(--surface-5);
+    --xy-controls-button-background-color: var(--surface-3);
+    --xy-controls-button-background-color-hover: var(--surface-4);
+    --xy-controls-button-color: var(--text-secondary);
+    --xy-controls-button-color-hover: var(--text-primary);
+    --xy-controls-button-border-color: var(--border-subtle);
+    --xy-controls-box-shadow: none;
+    --xy-edge-stroke: var(--border-interactive);
+    --xy-edge-stroke-selected: var(--accent-9);
   }
   .react-flow__node {
     cursor: pointer;
@@ -243,34 +262,20 @@
     display: none;
   }
   .react-flow__minimap {
-    background: var(--surface-2);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
+    overflow: hidden;
   }
-  /* The container carries its own light background by default, which shows
-     through as a white box on a near-black canvas. */
   .react-flow__controls {
-    background: var(--surface-2);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    box-shadow: none;
     overflow: hidden;
   }
   .react-flow__controls-button {
-    background: var(--surface-3);
-    border: none;
     border-bottom: 1px solid var(--border-subtle);
-    fill: var(--text-secondary);
   }
   .react-flow__controls-button:last-child {
     border-bottom: none;
-  }
-  .react-flow__controls-button:hover {
-    background: var(--surface-4);
-    fill: var(--text-primary);
-  }
-  .react-flow__controls-button svg {
-    fill: currentColor;
   }
 
   @media print {

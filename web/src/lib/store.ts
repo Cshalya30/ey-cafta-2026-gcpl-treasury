@@ -16,9 +16,11 @@ type UiState = {
   persona: string;
   display: DisplayCurrency;
   consent: ConsentState;
+  orientationDismissed: boolean;
   setPersona: (persona: string) => void;
   setDisplay: (display: DisplayCurrency) => void;
   setConsent: (consent: ConsentState) => void;
+  setOrientationDismissed: (dismissed: boolean) => void;
 };
 
 /**
@@ -60,12 +62,14 @@ export const useUi = create<UiState>()(
       persona: 'P2',
       display: 'USD',
       consent: 'unknown',
+      orientationDismissed: false,
       setPersona: (persona) => set({ persona }),
       setDisplay: (display) => set({ display }),
       setConsent: (consent) => {
         if (consent === 'declined') guardedStorage.removeItem('gcpl-ui');
         set({ consent });
       },
+      setOrientationDismissed: (orientationDismissed) => set({ orientationDismissed }),
     }),
     {
       name: 'gcpl-ui',
@@ -74,6 +78,7 @@ export const useUi = create<UiState>()(
         persona: state.persona,
         display: state.display,
         consent: state.consent,
+        orientationDismissed: state.orientationDismissed,
       }),
     },
   ),

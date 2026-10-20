@@ -66,8 +66,10 @@ function StudioInner() {
   const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
+    // simulate.reset is stable for the lifetime of the mutation.
     simulate.reset();
     setSelected(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflowId]);
 
   const detail = workflow.data;
@@ -209,6 +211,7 @@ function StudioInner() {
         ) : (
           <div className="relative h-full min-h-[420px]">
             <ReactFlow
+              colorMode="dark"
               nodes={nodes}
               edges={edges}
               nodeTypes={stepNodeTypes}

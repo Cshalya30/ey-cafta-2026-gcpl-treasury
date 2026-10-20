@@ -17,8 +17,12 @@ import { Button } from '@/components/primitives';
 export function ConsentBanner() {
   const consent = useUi((state) => state.consent);
   const setConsent = useUi((state) => state.setConsent);
+  const orientationDismissed = useUi((state) => state.orientationDismissed);
 
-  if (consent !== 'unknown') return null;
+  // Two unrelated fixed banners stacking on a first visit is the thing that
+  // reads as broken, not two separate notices. The orientation card explains
+  // the product; it gets the screen to itself before this one appears.
+  if (consent !== 'unknown' || !orientationDismissed) return null;
 
   return (
     <aside

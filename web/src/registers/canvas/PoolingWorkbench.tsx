@@ -78,6 +78,7 @@ export function PoolingWorkbench() {
       if (timer.current) window.clearTimeout(timer.current);
     };
     // evaluate.mutate is stable for the lifetime of the mutation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source, target, amount, tenor, rate]);
 
   const result = evaluate.data as Evaluation | undefined;

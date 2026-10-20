@@ -333,6 +333,7 @@ function CanvasInner() {
             </div>
           ) : (
             <ReactFlow
+              colorMode="dark"
               nodes={nodes}
               edges={edges}
               nodeTypes={nodeTypes}
@@ -386,37 +387,47 @@ function CanvasInner() {
 function LensBar({ lensId, onChange }: { lensId: string; onChange: (id: string) => void }) {
   return (
     <div
-      role="tablist"
-      aria-label="Canvas lenses"
-      className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-[var(--border-subtle)] bg-[var(--surface-2)] px-2 py-1.5"
+      className="flex shrink-0 items-center gap-1 border-b border-[var(--border-subtle)] bg-[var(--surface-2)] px-2 py-1.5"
     >
-      {LENSES.map((lens) => {
-        const active = lens.id === lensId;
-        return (
-          <button
-            key={lens.id}
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(lens.id)}
-            title={`${lens.nodeEncodes}. Shortcut: ${lens.key}`}
-            className={cn(
-              'flex h-7 shrink-0 items-center gap-1.5 rounded-[3px] px-2.5 text-[12px] transition-colors duration-100',
-              active
-                ? 'bg-[var(--surface-4)] text-[var(--text-primary)] shadow-[inset_0_0_0_1px_var(--border-interactive)]'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]',
-            )}
-          >
-            <kbd
-              className="ident rounded-[2px] bg-[var(--surface-1)] px-1 text-[10px] text-[var(--text-tertiary)]"
-              aria-hidden
+      {/* Only the tabs scroll. The hint used to sit inside this same scroll
+          region and, once eight tabs stopped fitting, was pushed off the
+          right edge with no affordance that more content existed — it read
+          as text clipped mid-sentence rather than a thing you could reach. */}
+      <div role="tablist" aria-label="Canvas lenses" className="flex min-w-0 items-center gap-1 overflow-x-auto">
+        {LENSES.map((lens) => {
+          const active = lens.id === lensId;
+          return (
+            <button
+              key={lens.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => onChange(lens.id)}
+              title={`${lens.nodeEncodes}. Shortcut: ${lens.key}`}
+              className={cn(
+                'flex h-7 shrink-0 items-center gap-1.5 rounded-[3px] px-2.5 text-[12px] transition-colors duration-100',
+                active
+                  ? 'bg-[var(--surface-4)] text-[var(--text-primary)] shadow-[inset_0_0_0_1px_var(--border-interactive)]'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--surface-3)] hover:text-[var(--text-primary)]',
+              )}
             >
-              {lens.key}
-            </kbd>
-            {lens.label}
-          </button>
-        );
-      })}
-      <span className="ml-auto flex shrink-0 items-center gap-1 pr-1 text-[10px] text-[var(--text-tertiary)]">
+              <kbd
+                className="ident rounded-[2px] bg-[var(--surface-1)] px-1 text-[10px] text-[var(--text-tertiary)]"
+                aria-hidden
+              >
+                {lens.key}
+              </kbd>
+              {lens.label}
+            </button>
+          );
+        })}
+      </div>
+      {/* Visually hidden rather than clipped once the tabs alone fill the
+          width: a truncated hint reads as broken, an absent one does not.
+          `sr-only` keeps it in the accessibility tree at every width — a
+          screen-reader user should not lose a hint that a sighted one on a
+          wide screen still gets — and the per-tab `title` carries the same
+          shortcut regardless. */}
+      <span className="ml-auto sr-only shrink-0 items-center gap-1 pr-1 text-[10px] text-[var(--text-tertiary)] 2xl:not-sr-only 2xl:flex">
         <Keyboard size={11} aria-hidden />
         click to open · double-click to isolate
       </span>
@@ -532,8 +543,11 @@ function LeakPanel() {
           ) : null}
 
           <details className="mt-3">
+            {/* Not "Method": that name now belongs to the /method register, a
+                walkthrough of the whole system. This is a one-line note on
+                how this one figure was computed, so it says that instead. */}
             <summary className="cursor-pointer text-[11px] text-[var(--text-tertiary)]">
-              Method
+              Calculation note
             </summary>
             <p className="mt-1 text-[10px] leading-relaxed text-[var(--text-tertiary)]">
               {leak.data.method}

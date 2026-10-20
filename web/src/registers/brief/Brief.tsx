@@ -5,6 +5,7 @@
  * from the API, so the narrative cannot drift away from the data beneath it.
  */
 
+import type { ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
 import { Flag, Info } from 'lucide-react';
 import {
@@ -199,7 +200,7 @@ function Narrative() {
   );
 }
 
-function Strong({ children }: { children: React.ReactNode }) {
+function Strong({ children }: { children: ReactNode }) {
   return <strong className="tnum font-semibold text-[var(--text-primary)]">{children}</strong>;
 }
 
@@ -284,7 +285,13 @@ function WaveTracker() {
                 <span
                   key={month}
                   className="tnum absolute text-[10px] text-[var(--text-tertiary)]"
-                  style={{ left: `${(month / months) * 100}%` }}
+                  style={{
+                    left: `${(month / months) * 100}%`,
+                    // The final tick sits at the ruler's right edge; left-anchored
+                    // like every other tick, its own label text ran past the
+                    // container and was clipped by the viewport.
+                    transform: month === months ? 'translateX(-100%)' : undefined,
+                  }}
                 >
                   M{month}
                 </span>

@@ -670,7 +670,7 @@ function ExposuresTab({ entity }: { entity: Entity }) {
 
 function PaymentsTab({ entity }: { entity: Entity }) {
   const accounts = useAccounts({ entity: entity.id });
-  const rows = accounts.data ?? [];
+  const rows = useMemo(() => accounts.data ?? [], [accounts.data]);
   const byConnectivity = useMemo(() => {
     const map = new Map<string, number>();
     for (const account of rows) map.set(account.feed_type, (map.get(account.feed_type) ?? 0) + 1);

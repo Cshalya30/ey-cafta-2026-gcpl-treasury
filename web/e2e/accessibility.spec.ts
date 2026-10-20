@@ -6,10 +6,12 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
-const ROUTES = ['/canvas', '/console', '/terminal', '/brief', '/cockpit'] as const;
+const ROUTES = ['/canvas', '/console', '/terminal', '/brief', '/cockpit', '/method'] as const;
 
 async function settle(page: Page, path: string) {
   await page.goto(path);
+  const orientation = page.getByRole('button', { name: 'Dismiss orientation' });
+  if (await orientation.count()) await orientation.click();
   const allow = page.getByRole('button', { name: 'Allow' });
   if (await allow.count()) await allow.click();
   await page.waitForLoadState('networkidle');

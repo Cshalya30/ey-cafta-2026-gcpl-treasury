@@ -34,6 +34,8 @@ const CAPABILITIES: Record<string, { initiate: boolean; approve: boolean; settle
 
 async function actAs(page: Page, persona: string) {
   await page.goto('/canvas');
+  const orientation = page.getByRole('button', { name: 'Dismiss orientation' });
+  if (await orientation.count()) await orientation.click();
   const allow = page.getByRole('button', { name: 'Allow' });
   if (await allow.count()) await allow.click();
   await page.locator('#persona-switch').selectOption(persona);

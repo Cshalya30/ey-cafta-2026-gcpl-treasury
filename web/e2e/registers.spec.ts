@@ -14,8 +14,12 @@ const REGISTERS = [
   { path: '/method', name: 'Method' },
 ] as const;
 
-/** Accept the storage notice so it does not sit over the footer in a snapshot. */
+/** Dismiss the orientation card and accept the storage notice, so neither
+ * sits over the page in a snapshot. The consent banner only appears once the
+ * orientation card is gone, so this must run in that order. */
 async function dismissNotice(page: Page) {
+  const orientation = page.getByRole('button', { name: 'Dismiss orientation' });
+  if (await orientation.count()) await orientation.click();
   const allow = page.getByRole('button', { name: 'Allow' });
   if (await allow.count()) await allow.click();
 }

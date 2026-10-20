@@ -13,6 +13,7 @@ import {
   BookOpen,
   Building2,
   Command,
+  Compass,
   Network,
   Route,
   Terminal as TerminalIcon,
@@ -23,6 +24,7 @@ import type { DisplayCurrency } from '@/lib/format';
 import { Badge, Button, Dot, cn } from '@/components/primitives';
 import { CommandPalette } from './CommandPalette';
 import { ConsentBanner } from './ConsentBanner';
+import { OrientationCard } from './OrientationCard';
 
 const REGISTERS = [
   { to: '/canvas', label: 'Canvas', icon: Network, hint: 'Node graph, eight lenses' },
@@ -32,6 +34,28 @@ const REGISTERS = [
   { to: '/cockpit', label: 'Cockpit', icon: Activity, hint: 'Single-entity scoped view' },
   { to: '/method', label: 'Method', icon: Route, hint: 'How the system works' },
 ] as const;
+
+/** One document title per register, so a browser tab or history entry names
+ * where the reader is rather than showing the same title for every route. */
+const TITLES: Record<string, string> = {
+  '/canvas': 'Canvas',
+  '/console': 'Console',
+  '/terminal': 'Terminal',
+  '/brief': 'Brief',
+  '/cockpit': 'Cockpit',
+  '/method': 'Method',
+};
+
+function useRouteTitle(pathname: string): void {
+  useEffect(() => {
+    const base = Object.keys(TITLES)
+      .sort((a, b) => b.length - a.length)
+      .find((prefix) => pathname.startsWith(prefix));
+    document.title = base
+      ? `${TITLES[base]} — GCPL Treasury Command`
+      : 'GCPL Treasury Command — group cash visibility in ninety days';
+  }, [pathname]);
+}
 
 const DISPLAYS: DisplayCurrency[] = ['USD', 'INR', 'native'];
 
@@ -44,6 +68,9 @@ export function Shell() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const setOrientationDismissed = useUi((s) => s.setOrientationDismissed);
+
+  useRouteTitle(location.pathname);
 
   // The INR toggle converts through the API's own rate, never an invented one.
   useEffect(() => {
@@ -170,6 +197,15 @@ export function Shell() {
 
           <Button
             variant="ghost"
+            onClick={() => setOrientationDismissed(false)}
+            title="Reopen the orientation card"
+          >
+            <Compass size={13} aria-hidden />
+            <span className="sr-only">Reopen orientation</span>
+          </Button>
+
+          <Button
+            variant="ghost"
             onClick={() => navigate({ pathname: location.pathname, search }, { replace: true })}
             title="Command palette. Press Control or Command and K."
             className="gap-1"
@@ -179,6 +215,8 @@ export function Shell() {
           </Button>
         </div>
       </header>
+
+      <OrientationCard />
 
       <main className="min-h-0 flex-1 overflow-hidden">
         <Outlet />
